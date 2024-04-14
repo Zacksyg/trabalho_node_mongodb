@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listagem de Usuários</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Estilos para os botões de ação */
+        .action-button {
+            margin-left: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            background-color: #ff3b30;
+        }
+
+        .delete-button:hover {
+            background-color: #ff1e15;
+        }
+
+        .update-button {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .update-button:hover {
+            background-color: #388e3c;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Listagem de Usuários</h1>
+    <ul id="userList"></ul>
+
+    <div id="updateForm" style="display: none;"></div>
+
+    <script>
+        function loadUsers() {
+            axios.get('/usuarios/')
+                .then(function (response) {
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = '';
+                    response.data.forEach(user => {
+                        const userItem = document.createElement('li');
+                        userItem.textContent = `Nome: ${user.nome}, Email: ${user.email} `;
+
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Deletar';
+                        deleteButton.className = 'action-button delete-button';
+                        deleteButton.onclick = function () { deleteUser(user._id); };
+                        userItem.appendChild(deleteButton);
+
+                        const updateButton = document.createElement('button');
+                        updateButton.textContent = 'Atualizar';
+                        updateButton.className = 'action-button update-button';
+                        updateButton.onclick = function () { showUpdateForm(user._id, user.nome, user.email); };
+                        userItem.appendChild(updateButton);
+
+                        userList.appendChild(userItem);
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Erro ao buscar usuários:', error);
+                });
+        }
+
+        function deleteUser(userId) {
+            axios.delete(`/usuarios/${userId}`)
+                .then(function () {
+                    alert('Usuário deletado com sucesso!');
+                    loadUsers();
+                })
+                .catch(function (error) {
+                    alert('Erro ao deletar usuário: ' + error.response.data.message);
+                });
+        }
+
+        function showUpdateForm(userId, nome, email) {
+            // Seleciona o elemento onde o formulário de atualização será exibido
+            const updateFormContainer = document.getElementById('updateForm');
+
+            // Limpa qualquer conteúdo anterior do container
+            updateFormContainer.innerHTML = '';
+
+            // Cria o formulário de atualização dinâmico
+            const updateForm = document.createElement('form');
+            updateForm.innerHTML = `
+                <h2>Atualizar Usuário</h2>
+                <label for="nomeUpdate">Nome:</label>
+                <input type="text" id="nomeUpdate" name="nome" value="${nome}" required><br><br>
+
+                <label for="emailUpdate">Email:</label>
+                <input type="email" id="emailUpdate" name="email" value="${email}" required><br><br>
+
+                <label for="senhaUpdate">Nova Senha:</label>
+                <input type="password" id="senhaUpdate" name="senha"><br><br>
+
+                <button type="button" onclick="updateUser('${userId}')">Atualizar</button>
+            `;
+
+            // Adiciona o formulário ao container
+            updateFormContainer.appendChild(updateForm);
+
+            // Exibe o container do formulário de atualização
+            updateFormContainer.style.display = 'block';
+        }
+
+        function updateUser(userId) {
+            const nome = document.getElementById('nomeUpdate').value;
+            const email = document.getElementById('emailUpdate').value;
+            const senha = document.getElementById('senhaUpdate').value;
+
+            axios.put(`/usuarios/${userId}`, { nome, email, senha })
+                .then(function (response) {
+                    alert('Usuário atualizado com sucesso!');
+                    loadUsers();
+                })
+                .catch(function (error) {
+                    alert('Erro ao atualizar usuário: ' + error.response.data.message);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+
+</html>
